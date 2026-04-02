@@ -1,0 +1,9 @@
+pdfplumber
+python-docx
+pyyaml
+colorama
+openpyxl
+tqdm
+presidio-analyzer
+presidio-anonymizer
+spacy

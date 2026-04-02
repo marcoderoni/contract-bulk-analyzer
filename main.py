@@ -47,6 +47,21 @@ def main():
     print(Fore.CYAN + "📂 Caricamento contratti...")
     contracts = load_contracts(CONTRACTS_DIR)
 
+    # Sanitize PII in all contracts
+    pii_mappings = {}
+    sanitized_contracts = {}
+    try:
+        from analyzer.sanitizer import sanitize, desanitize
+        for filename, text in contracts.items():
+            sanitized_text, mapping = sanitize(text)
+            sanitized_contracts[filename] = sanitized_text
+            pii_mappings[filename] = mapping
+        total_entities = sum(len(m) for m in pii_mappings.values())
+        print(Fore.GREEN + f"   ✓ PII sanitizzato: {total_entities} entità redatte in {len(contracts)} contratti")
+        contracts = sanitized_contracts
+    except Exception as e:
+        print(Fore.YELLOW + f"   ⚠️  PII sanitization skipped: {e}")
+
     if not contracts:
         print(Fore.YELLOW + f"\n⚠️  Nessun contratto trovato in '{CONTRACTS_DIR}/'")
         print("   Metti uno o più file PDF o DOCX nella cartella contracts/ e riprova.")
