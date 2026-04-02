@@ -1,5 +1,11 @@
 # Contract Bulk Analyzer
 
+![Python](https://img.shields.io/badge/python-3.9+-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Last Commit](https://img.shields.io/github/last-commit/marcoderoni/contract-bulk-analyzer)
+![Output](https://img.shields.io/badge/output-Excel%20%2B%20Word-green)
+![Privacy](https://img.shields.io/badge/PII-redaction-red)
+
 **Copyright (c) 2025 Marco De Roni. All rights reserved.**  
 Licensed under the [MIT License](LICENSE).
 
