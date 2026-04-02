@@ -1,0 +1,70 @@
+# =============================================================
+# CONTRACT BULK ANALYZER — QUERIES CONFIGURATION (EXAMPLE)
+# Copy this file to queries.yaml and customise for your needs.
+# queries.yaml is excluded from git (.gitignore)
+# Copyright (c) 2025 Marco De Roni. All rights reserved.
+# =============================================================
+
+# --- KEYWORD FREQUENCY ---
+# Search for these words/phrases across all contracts.
+# Output: count of contracts where each keyword appears + % of total.
+
+keywords:
+  - "unlimited liability"
+  - "auto-renewal"
+  - "GDPR"
+  - "data breach"
+  - "termination for convenience"
+  - "gross negligence"
+  - "wilful misconduct"
+  - "indemnif"
+  - "consequential damages"
+  - "governing law"
+
+# --- CLAUSE PRESENCE ---
+# Check if these clauses are present or absent in each contract.
+# Output: per-contract yes/no + % presence across all contracts.
+
+clauses:
+  - name: "Limitation of Liability"
+    keywords: ["limitation of liability", "liability cap", "cumulative liability"]
+  - name: "Data Protection / GDPR"
+    keywords: ["data protection", "personal data", "GDPR", "data processing"]
+  - name: "Confidentiality"
+    keywords: ["confidential", "non-disclosure"]
+  - name: "Indemnification"
+    keywords: ["indemnif", "hold harmless"]
+  - name: "Termination"
+    keywords: ["terminat", "cancell"]
+  - name: "Governing Law"
+    keywords: ["governed by", "governing law"]
+  - name: "Dispute Resolution"
+    keywords: ["dispute", "arbitration", "mediation"]
+  - name: "Force Majeure"
+    keywords: ["force majeure", "act of god"]
+  - name: "Auto-Renewal"
+    keywords: ["auto-renewal", "automatically renew", "evergreen"]
+
+# --- METADATA EXTRACTION ---
+# Extract these fields from every contract into a summary table.
+
+metadata:
+  parties_keywords: ["between", "entered into by", "agreement between"]
+  date_keywords: ["dated", "effective date", "as of"]
+  governing_law_keywords: ["governed by", "governing law", "laws of"]
+  jurisdiction_keywords: ["jurisdiction", "courts of", "competent court"]
+  notice_keywords: ["days' notice", "days notice", "written notice"]
+  duration_keywords: ["term", "initial term", "duration", "period of"]
+  renewal_keywords: ["auto-renewal", "automatically renew", "evergreen"]
+
+# --- COMPARISON GROUPS ---
+# Group contracts by type for cross-group comparison.
+# The tool will highlight clauses present in one group but not another.
+
+comparison_groups:
+  - name: "Vendor Contracts"
+    patterns: ["vendor", "supplier", "MSA"]
+  - name: "Customer Contracts"
+    patterns: ["customer", "client", "order form"]
+  - name: "NDA"
+    patterns: ["NDA", "non-disclosure", "confidentiality agreement"]

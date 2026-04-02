@@ -1,11 +1,11 @@
-# Copyright (c) 2025 Marco De Roni. All rights reserved.
+# Copyright (c) 2026 Marco De Roni. All rights reserved.
 # Licensed under the MIT License — see LICENSE file for details.
 
 import os
 import sys
+import argparse
 import yaml
 from colorama import Fore, Style, init
-from tqdm import tqdm
 from analyzer.extractor import load_contracts
 from analyzer.keyword_scan import scan_keywords
 from analyzer.clause_scan import scan_clauses
@@ -20,38 +20,58 @@ CONTRACTS_DIR = "contracts"
 OUTPUT_DIR = "output"
 
 
-def load_queries() -> dict:
-    if not os.path.exists(QUERIES_PATH):
-        print(Fore.RED + f"\n❌ File queries non trovato: {QUERIES_PATH}")
+def parse_args():
+    parser = argparse.ArgumentParser(description="Contract Bulk Analyzer — cross-contract analysis")
+    parser.add_argument("--queries", type=str, help="Path to queries YAML file")
+    parser.add_argument("--contracts", type=str, help="Path to contracts folder")
+    parser.add_argument("--output", type=str, help="Path to output folder")
+    parser.add_argument("--keyword", type=str, help="Add a one-off keyword to search")
+    return parser.parse_args()
+
+
+def load_queries(path: str) -> dict:
+    if not os.path.exists(path):
+        print(Fore.RED + f"\n❌ File queries non trovato: {path}")
         print(Fore.YELLOW + "   Copia config/queries.example.yaml → config/queries.yaml")
         sys.exit(1)
-    with open(QUERIES_PATH) as f:
+    with open(path) as f:
         content = yaml.safe_load(f)
     if not content or not isinstance(content, dict):
-        print(Fore.RED + f"\n❌ File queries vuoto o non valido: {QUERIES_PATH}")
+        print(Fore.RED + f"\n❌ File queries vuoto o non valido: {path}")
         sys.exit(1)
     return content
 
 
 def main():
+    args = parse_args()
+
+    queries_path = args.queries or QUERIES_PATH
+    contracts_dir = args.contracts or CONTRACTS_DIR
+    output_dir = args.output or OUTPUT_DIR
+
     print(Fore.WHITE + Style.BRIGHT + "\n=== Contract Bulk Analyzer ===\n")
 
     # 1. Carica queries
-    queries = load_queries()
+    queries = load_queries(queries_path)
     keywords = queries.get("keywords", [])
     clauses = queries.get("clauses", [])
     meta_config = queries.get("metadata", {})
     groups_config = queries.get("comparison_groups", [])
 
+    # Add one-off keyword from CLI
+    if args.keyword:
+        keywords = list(keywords) + [args.keyword]
+        print(Fore.CYAN + f"   + Keyword aggiunta: {args.keyword}\n")
+
     # 2. Carica contratti
     print(Fore.CYAN + "📂 Caricamento contratti...")
-    contracts = load_contracts(CONTRACTS_DIR)
+    contracts = load_contracts(contracts_dir)
 
-    # Sanitize PII in all contracts
+    # Sanitize PII
     pii_mappings = {}
     sanitized_contracts = {}
     try:
-        from analyzer.sanitizer import sanitize, desanitize
+        from analyzer.sanitizer import sanitize
         for filename, text in contracts.items():
             sanitized_text, mapping = sanitize(text)
             sanitized_contracts[filename] = sanitized_text
@@ -63,7 +83,7 @@ def main():
         print(Fore.YELLOW + f"   ⚠️  PII sanitization skipped: {e}")
 
     if not contracts:
-        print(Fore.YELLOW + f"\n⚠️  Nessun contratto trovato in '{CONTRACTS_DIR}/'")
+        print(Fore.YELLOW + f"\n⚠️  Nessun contratto trovato in '{contracts_dir}/'")
         print("   Metti uno o più file PDF o DOCX nella cartella contracts/ e riprova.")
         return
 
@@ -109,11 +129,11 @@ def main():
     print(Fore.CYAN + "\n📝 Generazione report...")
     excel_path = generate_excel(
         keyword_results, clause_results,
-        metadata_results, comparison_results, OUTPUT_DIR
+        metadata_results, comparison_results, output_dir
     )
     word_path = generate_word(
         keyword_results, clause_results,
-        metadata_results, comparison_results, OUTPUT_DIR
+        metadata_results, comparison_results, output_dir
     )
 
     print(Fore.WHITE + Style.BRIGHT + "\n" + "="*60)
