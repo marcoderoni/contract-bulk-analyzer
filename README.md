@@ -31,6 +31,7 @@ Companion project to [Contract Scanner](https://github.com/marcoderoni/Contract-
 - 📊 **Excel output** — multi-sheet workbook with color-coded results
 - 📝 **Word output** — summary report with tables and divergence highlights
 - ⚙️ **No coding required** — define all queries in plain YAML
+- 🔒 **PII sanitization** — automatically redacts names, dates, emails and other sensitive entities before sending to AI provider, then restores them in the final report
 
 ---
 
@@ -190,6 +191,7 @@ Output: one row per contract with all extracted fields in Excel.
 - `contracts/` is excluded from git — your documents never leave your machine
 - `config/queries.yaml` is excluded from git — your queries stay private
 - All processing is local — no data is sent to external APIs
+- PII redaction via Microsoft Presidio — 900+ entities automatically anonymised per batch
 
 ---
 
