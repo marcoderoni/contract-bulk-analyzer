@@ -6,6 +6,8 @@
 ![Output](https://img.shields.io/badge/output-Excel%20%2B%20Word-green)
 ![Privacy](https://img.shields.io/badge/PII-redaction-red)
 
+![CI](https://github.com/marcoderoni/contract-bulk-analyzer/actions/workflows/ci.yml/badge.svg)
+
 **Copyright (c) 2025 Marco De Roni. All rights reserved.**  
 Licensed under the [MIT License](LICENSE).
 
