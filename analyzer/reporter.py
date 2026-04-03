@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Marco De Roni. All rights reserved.
+# Copyright (c) 2026 Marco De Roni. All rights reserved.
 # Licensed under the MIT License — see LICENSE file for details.
 
 import os
@@ -15,8 +15,6 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 GREEN_FILL  = PatternFill("solid", fgColor="C6EFCE")
 YELLOW_FILL = PatternFill("solid", fgColor="FFEB9C")
 RED_FILL    = PatternFill("solid", fgColor="FFC7CE")
-BLUE_FILL   = PatternFill("solid", fgColor="BDD7EE")
-GREY_FILL   = PatternFill("solid", fgColor="D9D9D9")
 HEADER_FILL = PatternFill("solid", fgColor="1F4E79")
 
 HEADER_FONT  = Font(bold=True, color="FFFFFF", size=11)
@@ -57,6 +55,12 @@ def pct_fill(pct: float) -> PatternFill:
         return RED_FILL
 
 
+def add_heading(doc: Document, text: str, level: int = 1):
+    heading = doc.add_heading(text, level=level)
+    heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    return heading
+
+
 # ─────────────────────────────────────────────
 # EXCEL REPORT
 # ─────────────────────────────────────────────
@@ -70,7 +74,7 @@ def generate_excel(
 ) -> str:
 
     wb = Workbook()
-    wb.remove(wb.active)  # rimuovi sheet vuoto default
+    wb.remove(wb.active)
 
     # ── Sheet 1: Summary ──
     ws = wb.create_sheet("Summary")
@@ -90,12 +94,7 @@ def generate_excel(
     style_header_row(ws2, 1, len(headers))
 
     for kw, data in keyword_results.items():
-        row = [
-            kw,
-            data["contracts_found"],
-            data["contracts_total"],
-            f"{data['percentage']}%",
-        ]
+        row = [kw, data["contracts_found"], data["contracts_total"], f"{data['percentage']}%"]
         ws2.append(row)
         r = ws2.max_row
         ws2.cell(r, 4).fill = pct_fill(data["percentage"])
@@ -111,13 +110,7 @@ def generate_excel(
     style_header_row(ws3, 1, len(headers3))
 
     for name, data in clause_results.items():
-        row = [
-            name,
-            data["present_count"],
-            data["absent_count"],
-            data["total"],
-            f"{data['presence_pct']}%",
-        ]
+        row = [name, data["present_count"], data["absent_count"], data["total"], f"{data['presence_pct']}%"]
         ws3.append(row)
         r = ws3.max_row
         ws3.cell(r, 5).fill = pct_fill(data["presence_pct"])
@@ -126,7 +119,7 @@ def generate_excel(
             ws3.cell(r, col).border = THIN_BORDER
     auto_width(ws3)
 
-    # ── Sheet 4: Per-Contract Clause Matrix ──
+    # ── Sheet 4: Clause Matrix ──
     ws4 = wb.create_sheet("Clause Matrix")
     clause_names = list(clause_results.keys())
     filenames = list(metadata_results.keys())
@@ -139,10 +132,7 @@ def generate_excel(
         row = [filename]
         for clause_name in clause_names:
             present_in = clause_results[clause_name]["present_in"]
-            if filename in present_in:
-                row.append("✓")
-            else:
-                row.append("✗")
+            row.append("✓" if filename in present_in else "✗")
         ws4.append(row)
         r = ws4.max_row
         for col in range(2, len(clause_names) + 2):
@@ -200,7 +190,6 @@ def generate_excel(
             ws6.cell(r, 1).border = THIN_BORDER
         auto_width(ws6)
 
-    # ── Save ──
     os.makedirs(output_dir, exist_ok=True)
     path = os.path.join(output_dir, f"bulk_analysis_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx")
     wb.save(path)
@@ -216,7 +205,8 @@ def generate_word(
     clause_results: dict,
     metadata_results: dict,
     comparison_results: dict,
-    output_dir: str
+    output_dir: str,
+    pii_summary: dict = None
 ) -> str:
 
     doc = Document()
@@ -235,8 +225,32 @@ def generate_word(
     ).alignment = WD_ALIGN_PARAGRAPH.CENTER
     doc.add_paragraph()
 
+    # --- PII Redaction Summary ---
+    if pii_summary:
+        add_heading(doc, "Privacy & PII Redaction Summary", level=1)
+        total = pii_summary.get("total_entities", 0)
+        contracts_count = pii_summary.get("contracts_count", 0)
+        breakdown = pii_summary.get("breakdown", {})
+
+        doc.add_paragraph(
+            f"Before analysis, {total} sensitive entities were automatically redacted "
+            f"across {contracts_count} contracts and restored in this report."
+        )
+
+        if breakdown:
+            table = doc.add_table(rows=1, cols=2)
+            table.style = "Table Grid"
+            table.rows[0].cells[0].text = "Entity Type"
+            table.rows[0].cells[1].text = "Count"
+            for entity_type, count in sorted(breakdown.items()):
+                row = table.add_row().cells
+                row[0].text = entity_type
+                row[1].text = str(count)
+
+        doc.add_paragraph()
+
     # --- Keyword Frequency ---
-    doc.add_heading("1. Keyword Frequency", level=1)
+    add_heading(doc, "1. Keyword Frequency", level=1)
     table = doc.add_table(rows=1, cols=4)
     table.style = "Table Grid"
     for i, h in enumerate(["Keyword", "Found In", "Total", "% Presence"]):
@@ -254,7 +268,7 @@ def generate_word(
     doc.add_paragraph()
 
     # --- Clause Presence ---
-    doc.add_heading("2. Clause Presence", level=1)
+    add_heading(doc, "2. Clause Presence", level=1)
     table2 = doc.add_table(rows=1, cols=5)
     table2.style = "Table Grid"
     for i, h in enumerate(["Clause", "Present", "Absent", "Total", "% Presence"]):
@@ -274,7 +288,7 @@ def generate_word(
 
     # --- Group Comparison Divergences ---
     if comparison_results and comparison_results.get("divergences"):
-        doc.add_heading("3. Notable Divergences Between Contract Groups", level=1)
+        add_heading(doc, "3. Notable Divergences Between Contract Groups", level=1)
         for d in comparison_results["divergences"]:
             p = doc.add_paragraph(style="List Bullet")
             run = p.add_run(
@@ -285,7 +299,7 @@ def generate_word(
         doc.add_paragraph()
 
     # --- Metadata Summary ---
-    doc.add_heading("4. Metadata Summary", level=1)
+    add_heading(doc, "4. Metadata Summary", level=1)
     meta_fields = ["parties", "effective_date", "governing_law",
                    "jurisdiction", "notice_period", "duration", "auto_renewal"]
     table3 = doc.add_table(rows=1, cols=len(meta_fields) + 1)
@@ -304,7 +318,6 @@ def generate_word(
             row[i + 1].text = meta.get(f, "—")
             row[i + 1].paragraphs[0].runs[0].font.size = Pt(8)
 
-    # Save
     os.makedirs(output_dir, exist_ok=True)
     path = os.path.join(output_dir, f"bulk_report_{datetime.now().strftime('%Y%m%d_%H%M')}.docx")
     doc.save(path)

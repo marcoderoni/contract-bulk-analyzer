@@ -125,7 +125,18 @@ def main():
             for d in divergences[:5]:
                 print(f"   {d['clause']}: {d['max_group']} {d['max_pct']}% vs {d['min_group']} {d['min_pct']}%")
 
-    # 7. Genera report
+    # 7. Build PII summary
+    pii_summary = {
+        "total_entities": sum(len(m) for m in pii_mappings.values()),
+        "contracts_count": len(pii_mappings),
+        "breakdown": {}
+    }
+    for mapping in pii_mappings.values():
+        for placeholder in mapping.keys():
+            entity_type = placeholder.split("_")[0].replace("[", "")
+            pii_summary["breakdown"][entity_type] = pii_summary["breakdown"].get(entity_type, 0) + 1
+
+    # 8. Genera report
     print(Fore.CYAN + "\n📝 Generazione report...")
     excel_path = generate_excel(
         keyword_results, clause_results,
@@ -133,22 +144,11 @@ def main():
     )
     word_path = generate_word(
         keyword_results, clause_results,
-        metadata_results, comparison_results, output_dir
+        metadata_results, comparison_results,
+        output_dir, pii_summary=pii_summary
     )
 
-    # Audit log
-    try:
-        from analyzer.audit import log_analysis
-        entry = log_analysis(
-            contracts=list(contracts.keys()),
-            keyword_results=keyword_results,
-            clause_results=clause_results,
-        )
-        print(Fore.GREEN + f"   📋 Audit log aggiornato: {entry['timestamp']}")
-    except Exception as e:
-        print(Fore.YELLOW + f"   ⚠️  Audit log skipped: {e}")
-
-        # Audit log
+    # 9. Audit log
     try:
         from analyzer.audit import log_analysis
         entry = log_analysis(
