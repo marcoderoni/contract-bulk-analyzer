@@ -136,6 +136,30 @@ def main():
         metadata_results, comparison_results, output_dir
     )
 
+    # Audit log
+    try:
+        from analyzer.audit import log_analysis
+        entry = log_analysis(
+            contracts=list(contracts.keys()),
+            keyword_results=keyword_results,
+            clause_results=clause_results,
+        )
+        print(Fore.GREEN + f"   📋 Audit log aggiornato: {entry['timestamp']}")
+    except Exception as e:
+        print(Fore.YELLOW + f"   ⚠️  Audit log skipped: {e}")
+
+        # Audit log
+    try:
+        from analyzer.audit import log_analysis
+        entry = log_analysis(
+            contracts=list(contracts.keys()),
+            keyword_results=keyword_results,
+            clause_results=clause_results,
+        )
+        print(Fore.GREEN + f"   📋 Audit log aggiornato: {entry['timestamp']}")
+    except Exception as e:
+        print(Fore.YELLOW + f"   ⚠️  Audit log skipped: {e}")
+
     print(Fore.WHITE + Style.BRIGHT + "\n" + "="*60)
     print(Fore.GREEN + f"✅ Analisi completata!")
     print(f"   📊 Excel: {excel_path}")
