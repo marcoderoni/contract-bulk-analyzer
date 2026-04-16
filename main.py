@@ -95,7 +95,9 @@ def main():
     for kw, data in keyword_results.items():
         color = Fore.GREEN if data["percentage"] >= 80 else \
                 Fore.YELLOW if data["percentage"] >= 40 else Fore.RED
-        print(f"   {color}{kw:40} {data['contracts_found']}/{data['contracts_total']} ({data['percentage']}%)")
+        conf = data.get("confidence", "")
+        print(f"   {color}{kw:40} {data['contracts_found']}/{data['contracts_total']} ({data['percentage']}%) [{conf}]")
+
 
     # 4. Clause scan
     print(Fore.CYAN + "\n📋 Clause presence scan...")

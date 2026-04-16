@@ -10,3 +10,4 @@ output/
 echo "venv/" >> .gitignore
 echo "*.zip" >> .gitignore
 echo "en_core_web_lg*" >> .gitignore
+audit_log.jsonl
