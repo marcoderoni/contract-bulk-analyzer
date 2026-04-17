@@ -89,17 +89,18 @@ def generate_excel(
 
     # ── Sheet 2: Keyword Frequency ──
     ws2 = wb.create_sheet("Keyword Frequency")
-    headers = ["Keyword", "Contracts Found", "Total Contracts", "% Presence"]
+    headers = ["Keyword", "Contracts Found", "Total Contracts", "% Presence", "Confidence"]
     ws2.append(headers)
     style_header_row(ws2, 1, len(headers))
 
     for kw, data in keyword_results.items():
-        row = [kw, data["contracts_found"], data["contracts_total"], f"{data['percentage']}%"]
+        row = [kw, data["contracts_found"], data["contracts_total"],
+               f"{data['percentage']}%", data.get("confidence", "")]
         ws2.append(row)
         r = ws2.max_row
         ws2.cell(r, 4).fill = pct_fill(data["percentage"])
         ws2.cell(r, 4).font = BOLD_FONT
-        for col in range(1, 5):
+        for col in range(1, 6):
             ws2.cell(r, col).border = THIN_BORDER
     auto_width(ws2)
 
@@ -110,7 +111,8 @@ def generate_excel(
     style_header_row(ws3, 1, len(headers3))
 
     for name, data in clause_results.items():
-        row = [name, data["present_count"], data["absent_count"], data["total"], f"{data['presence_pct']}%"]
+        row = [name, data["present_count"], data["absent_count"],
+               data["total"], f"{data['presence_pct']}%"]
         ws3.append(row)
         r = ws3.max_row
         ws3.cell(r, 5).fill = pct_fill(data["presence_pct"])
@@ -190,6 +192,26 @@ def generate_excel(
             ws6.cell(r, 1).border = THIN_BORDER
         auto_width(ws6)
 
+    # ── Sheet 7: Clause Extracts ──
+    ws7 = wb.create_sheet("Clause Extracts")
+    headers7 = ["Clause", "Contract", "Extracted Text"]
+    ws7.append(headers7)
+    style_header_row(ws7, 1, len(headers7))
+
+    for clause_name, data in clause_results.items():
+        extracts = data.get("extracts", {})
+        for filename, extract in extracts.items():
+            ws7.append([clause_name, filename, extract])
+            r = ws7.max_row
+            for col in range(1, 4):
+                ws7.cell(r, col).border = THIN_BORDER
+                ws7.cell(r, col).font = NORMAL_FONT
+            ws7.cell(r, 3).alignment = Alignment(wrap_text=True)
+
+    ws7.column_dimensions["A"].width = 25
+    ws7.column_dimensions["B"].width = 40
+    ws7.column_dimensions["C"].width = 80
+
     os.makedirs(output_dir, exist_ok=True)
     path = os.path.join(output_dir, f"bulk_analysis_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx")
     wb.save(path)
@@ -216,7 +238,6 @@ def generate_word(
         section.left_margin = Inches(1.2)
         section.right_margin = Inches(1.2)
 
-    # Title
     title = doc.add_heading("CONTRACT BULK ANALYSIS REPORT", 0)
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     doc.add_paragraph(
@@ -246,14 +267,13 @@ def generate_word(
                 row = table.add_row().cells
                 row[0].text = entity_type
                 row[1].text = str(count)
-
         doc.add_paragraph()
 
     # --- Keyword Frequency ---
     add_heading(doc, "1. Keyword Frequency", level=1)
-    table = doc.add_table(rows=1, cols=4)
+    table = doc.add_table(rows=1, cols=5)
     table.style = "Table Grid"
-    for i, h in enumerate(["Keyword", "Found In", "Total", "% Presence"]):
+    for i, h in enumerate(["Keyword", "Found In", "Total", "% Presence", "Confidence"]):
         cell = table.rows[0].cells[i]
         cell.text = h
         cell.paragraphs[0].runs[0].bold = True
@@ -264,6 +284,7 @@ def generate_word(
         row[1].text = str(data["contracts_found"])
         row[2].text = str(data["contracts_total"])
         row[3].text = f"{data['percentage']}%"
+        row[4].text = data.get("confidence", "")
 
     doc.add_paragraph()
 
