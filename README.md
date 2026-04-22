@@ -40,6 +40,11 @@ Companion project to [Contract Scanner](https://github.com/marcoderoni/Contract-
 - 📝 **Word output** — summary report with tables and divergence highlights
 - ⚙️ **No coding required** — define all queries in plain YAML
 - 🔒 **PII sanitization** — automatically redacts names, dates, emails and other sensitive entities before sending to AI provider, then restores them in the final report
+- 🌐 **Streamlit web app** — browser interface, no command line required
+- 📋 **Audit log** — append-only JSONL log with SHA256 integrity hash
+- 🔒 **PII redaction report** — entities redacted before analysis, restored in report
+- 🎯 **Confidence score** — HIGH/MEDIUM/LOW rating per keyword
+- 📄 **Clause extraction** — extracts exact clause text into dedicated Excel sheet
 
 ---
 
